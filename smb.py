@@ -61,4 +61,4 @@ def telegram_bot_sendtext(bot_message):
   return response.json()
 
 
-telegram_bot_sendtext('Resumen automático del cierre de los mercados:\n\n' + urllib.parse.quote(data)) #urllib.parse.quote URL encodes the message
+telegram_bot_sendtext('Resumen automático de mercados:\n\n' + urllib.parse.quote(data)) #urllib.parse.quote URL encodes the message
