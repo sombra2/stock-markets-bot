@@ -10,6 +10,11 @@ import yfinance as yf
 import requests
 import urllib.parse #this library URL encondes the final message for the bot to publish
 import credentials
+import datetime
+
+now = datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+
+
 
 '''
 The keys in the dictionary below (words on the left) are the numbers that the bot will present, the values
