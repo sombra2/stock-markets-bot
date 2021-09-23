@@ -64,22 +64,31 @@ for i in range(0, len(tickers)):
     company = str(list(tickers.keys())[i])
     ticker = str(list(tickers.values())[i])
     name = yf.Ticker(ticker)
-    name_today = round(float(name.history(period="2d")['Close'].values[-1]),2)
-    name_yesterday = round(float(name.history(period="2d")['Close'].values[-2]),2)
-    name_difference = "%.2f" % float(name_today - name_yesterday)
+    name_today = round(float(name.history()['Close'].values[-1]),2)
+    name_yesterday = round(float(name.history()['Close'].values[-2]),2)
+    name_difference: str = "%.2f" % float(abs(name_today - name_yesterday))
     if (name_today - name_yesterday) > 0:
-      name_difference = '+' + name_difference
+        name_difference = '+' + name_difference
+        name_difference_emoji = '🔼'
+    elif (name_today - name_yesterday) < 0:
+        name_difference = '-' + name_difference
+        name_difference_emoji = '🔽'
     else:
-      name_difference = name_difference
+        name_difference = name_difference
+        name_difference_emoji = '↔️'
     name_percentage = "%.2f" % float((name_today / name_yesterday) * 100 - 100)
     if float(name_percentage) > 0:
-      name_percentage = '+' + name_percentage
+        name_percentage = '+' + name_percentage
     else:
-      name_percentage = name_percentage
-    data += '*{}* {} | {} | {}%\n'.format(company, name_today, name_difference, name_percentage)
-    # print('{} {} | {} | {}%'.format(company, name_today,name_difference,name_percentage))
+        name_percentage = name_percentage
+    data += '`{0:.<15} {1:<8} | {2:>8} | {3}% {4}`\n'.format(company,
+                                                           name_today,
+                                                           name_difference,
+                                                           name_percentage,
+                                                           name_difference_emoji)
 
-#print(data)
+
+print(data)
 
 
 # the function below sends the message through telegram.
@@ -92,5 +101,4 @@ def telegram_bot_sendtext(bot_message):
   return response.json()
 
 
-telegram_bot_sendtext('*Resumen automático de mercados:*\n\n' + date + '\n\n'
-                      '' + urllib.parse.quote(data)) #urllib.parse.quote URL encodes the message
+telegram_bot_sendtext('*Resumen automático de mercados:*\n\n' + date + '\n\n' + urllib.parse.quote(data)) #urllib.parse.quote URL encodes the message
