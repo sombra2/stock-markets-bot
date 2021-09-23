@@ -15,14 +15,14 @@ import credentials
 The keys in the dictionary below (words on the left) are the numbers that the bot will present, the values
 (the words on the right) are the tickers. The tickers are the ones in Yahoo Finance
 '''
-tickers = {'S&P500': '^GSPC',
-           'Dow Jones': '^DJI',
-           'NASDAQ': '^IXIC',
-           'FTSE 100': '^FTSE',
-           'DAX 30': '^GDAXI',
-           'CAC 40': '^FCHI',
-           'IBEX 35': '^IBEX',
-           'Nikkei 225': '^N225'}
+tickers = {'🇺🇸 S&P500': '^GSPC',
+           '🇺🇸 Dow Jones': '^DJI',
+           '🇺🇸 NASDAQ': '^IXIC',
+           '🇬🇧 FTSE 100': '^FTSE',
+           '🇩🇪 DAX 30': '^GDAXI',
+           '🇫🇷 CAC 40': '^FCHI',
+           '🇪🇸 IBEX 35': '^IBEX',
+           '🇯🇵 Nikkei 225': '^N225'}
 
 
 data = '' #this string will append the information generated below
@@ -61,4 +61,5 @@ def telegram_bot_sendtext(bot_message):
   return response.json()
 
 
-telegram_bot_sendtext('Resumen automático de mercados:\n\n' + urllib.parse.quote(data)) #urllib.parse.quote URL encodes the message
+telegram_bot_sendtext('*Resumen automático de mercados:*\n\n'
+                      '' + urllib.parse.quote(data)) #urllib.parse.quote URL encodes the message
