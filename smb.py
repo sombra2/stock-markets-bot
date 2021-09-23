@@ -12,8 +12,34 @@ import urllib.parse #this library URL encondes the final message for the bot to 
 import credentials
 import datetime
 
-now = datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S')
-
+today = datetime.datetime.now()
+months = {
+    '1':'Enero',
+    '2':'Febrero',
+    '3':'Marzo',
+    '4':'Abril',
+    '5':'Mayo',
+    '6':'Junio',
+    '7':'Julio',
+    '8':'Agosto',
+    '9':'Septiembre',
+    '10':'Octubre',
+    '11':'Noviembre',
+    '12':'Diciembre'
+}
+days_of_the_week = {
+    '0':'Lunes',
+    '1':'Martes',
+    '2':'Miércoles',
+    '3':'Jueves',
+    '4':'Viernes',
+    '5':'Sábado',
+    '6':'Domingo'
+}
+date = '{}, {} de {} de {}'.format(days_of_the_week[str(today.weekday())],
+                                   today.day,
+                                   months[str(today.month)],
+                                   today.year)
 
 
 '''
@@ -66,5 +92,5 @@ def telegram_bot_sendtext(bot_message):
   return response.json()
 
 
-telegram_bot_sendtext('*Resumen automático de mercados:*\n\n'
+telegram_bot_sendtext('*Resumen automático de mercados:*\n\n' + date + '\n\n'
                       '' + urllib.parse.quote(data)) #urllib.parse.quote URL encodes the message
