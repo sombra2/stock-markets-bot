@@ -64,8 +64,8 @@ for i in range(0, len(tickers)):
     company = str(list(tickers.keys())[i])
     ticker = str(list(tickers.values())[i])
     name = yf.Ticker(ticker)
-    name_today = round(float(name.history()['Close'].values[-1]),2)
-    name_yesterday = round(float(name.history()['Close'].values[-2]),2)
+    name_today = float(name.history()['Close'].values[-1])
+    name_yesterday = float(name.history()['Close'].values[-2])
     name_difference: str = "%.2f" % float(abs(name_today - name_yesterday))
     if (name_today - name_yesterday) > 0:
         name_difference = '+' + name_difference
@@ -81,7 +81,7 @@ for i in range(0, len(tickers)):
         name_percentage = '+' + name_percentage
     else:
         name_percentage = name_percentage
-    data += '`{0:.<15} {1:<8} | {2:>7} | {3}% {4}`\n'.format(company,
+    data += '`{0:.<15} {1:>8.2f} | {2:>7} | {3}% {4}`\n'.format(company,
                                                            name_today,
                                                            name_difference,
                                                            name_percentage,
