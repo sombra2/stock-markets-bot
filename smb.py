@@ -47,13 +47,20 @@ The keys in the dictionary below (words on the left) are the numbers that the bo
 (the words on the right) are the tickers. The tickers are the ones in Yahoo Finance
 '''
 tickers = {'🇺🇸 S&P500': '^GSPC',
+           '🇺🇸 VIX': '^VIX',
            '🇺🇸 Dow Jones': '^DJI',
            '🇺🇸 NASDAQ': '^IXIC',
+           '🇺🇸 Russell 2000': '^RUT',
            '🇬🇧 FTSE 100': '^FTSE',
+           '🇪🇺 Euro Stoxx': '^STOXX50E',
            '🇩🇪 DAX 30': '^GDAXI',
            '🇫🇷 CAC 40': '^FCHI',
            '🇪🇸 IBEX 35': '^IBEX',
-           '🇯🇵 Nikkei 225': '^N225'}
+           '🇯🇵 Nikkei 225': '^N225',
+           '🇨🇳 SSE': '000001.SS',
+           '🇭🇰 Hang Seng': '^HSI',
+           '🇮🇳 Nifty 50': '^NSEI'
+            }
 
 
 data = '' #this string will append the information generated below
@@ -69,10 +76,16 @@ for i in range(0, len(tickers)):
     name_difference: str = "%.2f" % float(abs(name_today - name_yesterday))
     if (name_today - name_yesterday) > 0:
         name_difference = '+' + name_difference
-        name_difference_emoji = '🟢'
+        if ticker == '^VIX': #for the VIX index, going high is bad and viceversa
+            name_difference_emoji = '🔴'
+        else:
+            name_difference_emoji = '🟢'
     elif (name_today - name_yesterday) < 0:
         name_difference = '-' + name_difference
-        name_difference_emoji = '🔴'
+        if ticker == '^VIX':
+            name_difference_emoji = '🟢'
+        else:
+            name_difference_emoji = '🔴'
     else:
         name_difference = name_difference
         name_difference_emoji = '↔️'
@@ -81,7 +94,7 @@ for i in range(0, len(tickers)):
         name_percentage = '+' + name_percentage
     else:
         name_percentage = name_percentage
-    data += '`{0:.<15} {1:>8.2f} | {2:>7} | {3}% {4}`\n'.format(company,
+    data += '`{0:.<15} {1:>8.2f} | {2:>7} | {3:>6}% {4}`\n'.format(company,
                                                            name_today,
                                                            name_difference,
                                                            name_percentage,
