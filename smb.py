@@ -69,10 +69,10 @@ for i in range(0, len(tickers)):
     name_difference: str = "%.2f" % float(abs(name_today - name_yesterday))
     if (name_today - name_yesterday) > 0:
         name_difference = '+' + name_difference
-        name_difference_emoji = '🔼'
+        name_difference_emoji = '🟢'
     elif (name_today - name_yesterday) < 0:
         name_difference = '-' + name_difference
-        name_difference_emoji = '🔽'
+        name_difference_emoji = '🔴'
     else:
         name_difference = name_difference
         name_difference_emoji = '↔️'
