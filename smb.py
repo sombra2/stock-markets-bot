@@ -94,7 +94,7 @@ for i in range(0, len(tickers)):
         name_percentage = '+' + name_percentage
     else:
         name_percentage = name_percentage
-    data += '`{0:.<15} {1:>8.2f} | {2:>7} | {3:>6}% {4}`\n'.format(company,
+    data += '`{0:.<15} {1:>8.2f} | {2:>8} | {3:>6}% {4}`\n'.format(company,
                                                            name_today,
                                                            name_difference,
                                                            name_percentage,
