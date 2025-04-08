@@ -34,20 +34,20 @@ date = '{}, {} de {} de {}'.format(days_of_the_week[str(today.weekday())],
                                    months[str(today.month)],
                                    today.year)
 
-tickers = {'🇺🇸 S&P500': 'GSPC',
-           '🇺🇸 VIX': 'VIX',
-           '🇺🇸 Dow Jones': 'DJI',
-           '🇺🇸 NASDAQ': 'IXIC',
-           '🇺🇸 Russell 2000': 'RUT',
-           '🇬🇧 FTSE 100': 'FTSE',
-           '🇪🇺 Euro Stoxx': 'STOXX50E',
-           '🇩🇪 DAX 30': 'GDAXI',
-           '🇫🇷 CAC 40': 'FCHI',
-           '🇪🇸 IBEX 35': 'IBEX',
-           '🇯🇵 Nikkei 225': 'N225',
-           '🇨🇳 SSE': '000001.SS',
-           '🇭🇰 Hang Seng': 'HSI',
-           '🇮🇳 Nifty 50': 'NSEI'
+tickers = {'🇺🇸 S&P500': '^GSPC',
+           '🇺🇸 VIX': '^VIX',
+           '🇺🇸 Dow Jones': '^DJI',
+           '🇺🇸 NASDAQ': '^IXIC',
+           '🇺🇸 Russell 2000': '^RUT',
+           '🇬🇧 FTSE 100': '^FTSE',
+           '🇪🇺 Euro Stoxx': '^STOXX50E',
+           '🇩🇪 DAX 30': '^GDAXI',
+           '🇫🇷 CAC 40': '^FCHI',
+           '🇪🇸 IBEX 35': '^IBEX',
+           '🇯🇵 Nikkei 225': '^N225',
+           '🇨🇳 SSE': '^000001.SS',
+           '🇭🇰 Hang Seng': '^HSI',
+           '🇮🇳 Nifty 50': '^NSEI'
             }
 
 data = ''
