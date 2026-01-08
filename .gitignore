@@ -129,5 +129,16 @@ dmypy.json
 .pyre/
 
 # Others
+# Python
+__pycache__/
+*.pyc
+
+# Virtual environments
+.venv/
+venv/
+
+# Local secrets
 credentials.py
-.idea/
+
+# Runtime cache
+cache.json
