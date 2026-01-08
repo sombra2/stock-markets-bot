@@ -1,123 +1,131 @@
 import yfinance as yf
 import requests
-import urllib.parse
 import credentials
 import datetime
 from time import sleep
 
+# -----------------------------
+# DATE FORMATTING (SPANISH)
+# -----------------------------
 today = datetime.datetime.now()
+
 months = {
-    '1':'Enero',
-    '2':'Febrero',
-    '3':'Marzo',
-    '4':'Abril',
-    '5':'Mayo',
-    '6':'Junio',
-    '7':'Julio',
-    '8':'Agosto',
-    '9':'Septiembre',
-    '10':'Octubre',
-    '11':'Noviembre',
-    '12':'Diciembre'
+    1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
+    5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
+    9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
 }
+
 days_of_the_week = {
-    '0':'Lunes',
-    '1':'Martes',
-    '2':'Miércoles',
-    '3':'Jueves',
-    '4':'Viernes',
-    '5':'Sábado',
-    '6':'Domingo'
+    0: 'Lunes', 1: 'Martes', 2: 'Miércoles',
+    3: 'Jueves', 4: 'Viernes', 5: 'Sábado', 6: 'Domingo'
 }
-date = '{}, {} de {} de {}'.format(days_of_the_week[str(today.weekday())],
-                                   today.day,
-                                   months[str(today.month)],
-                                   today.year)
 
-tickers = {'🇺🇸 S&P500': '^GSPC',
-           '🇺🇸 VIX': '^VIX',
-           '🇺🇸 Dow Jones': '^DJI',
-           '🇺🇸 NASDAQ': '^IXIC',
-           '🇺🇸 Russell 2000': '^RUT',
-           '🇬🇧 FTSE 100': '^FTSE',
-           '🇪🇺 Euro Stoxx': '^STOXX50E',
-           '🇩🇪 DAX 30': '^GDAXI',
-           '🇫🇷 CAC 40': '^FCHI',
-           '🇪🇸 IBEX 35': '^IBEX',
-           '🇯🇵 Nikkei 225': '^N225',
-           '🇨🇳 SSE': '000001.SS',
-           '🇭🇰 Hang Seng': '^HSI',
-           '🇮🇳 Nifty 50': '^NSEI'
-            }
+date_str = f"{days_of_the_week[today.weekday()]}, {today.day} de {months[today.month]} de {today.year}"
 
-data = ''
+# -----------------------------
+# TICKERS
+# -----------------------------
+tickers = {
+    '🇺🇸 S&P500': '^GSPC',
+    '🇺🇸 VIX': '^VIX',
+    '🇺🇸 Dow Jones': '^DJI',
+    '🇺🇸 NASDAQ': '^IXIC',
+    '🇺🇸 Russell 2000': '^RUT',
+    '🇬🇧 FTSE 100': '^FTSE',
+    '🇪🇺 Euro Stoxx': '^STOXX50E',
+    '🇩🇪 DAX 30': '^GDAXI',
+    '🇫🇷 CAC 40': '^FCHI',
+    '🇪🇸 IBEX 35': '^IBEX',
+    '🇯🇵 Nikkei 225': '^N225',
+    '🇨🇳 SSE': '000001.SS',
+    '🇭🇰 Hang Seng': '^HSI',
+    '🇮🇳 Nifty 50': '^NSEI'
+}
 
-def get_ticker_data(ticker, max_retries=3):
-    for attempt in range(max_retries):
-        try:
-            # Try getting data with a larger period to ensure we get recent data
-            hist = yf.Ticker(ticker).history(period='5d')
-            if len(hist) < 2:
-                raise ValueError("Not enough data points")
-            return hist
-        except Exception as e:
-            if attempt < max_retries - 1:
-                sleep(2)  # Wait before retrying
-                continue
-            print(f"Failed to fetch data for {ticker} after {max_retries} attempts: {str(e)}")
+# -----------------------------
+# DATA FETCHING (ROBUST)
+# -----------------------------
+def get_last_two_closes(ticker):
+    try:
+        hist = yf.Ticker(ticker).history(period='10d')
+        hist = hist.dropna(subset=['Close'])
+
+        if len(hist) < 2:
             return None
 
-for i in range(len(tickers)):
-    company = str(list(tickers.keys())[i])
-    ticker = str(list(tickers.values())[i])
-    
-    hist = get_ticker_data(ticker)
-    if hist is None or len(hist) < 2:
-        data += f'`{company:.<15} {"N/A":>8} | {"N/A":>8} | {"N/A":>6}% ❌`\n'
-        continue
-    
-    try:
-        name_today = float(hist['Close'].values[-1])
-        name_yesterday = float(hist['Close'].values[-2])
-        
-        name_difference = "%.2f" % float(abs(name_today - name_yesterday))
-        if (name_today - name_yesterday) > 0:
-            name_difference = '+' + name_difference
-            if ticker == '^VIX':
-                name_difference_emoji = '🔴'
-            else:
-                name_difference_emoji = '🟢'
-        elif (name_today - name_yesterday) < 0:
-            name_difference = '-' + name_difference
-            if ticker == '^VIX':
-                name_difference_emoji = '🟢'
-            else:
-                name_difference_emoji = '🔴'
-        else:
-            name_difference = name_difference
-            name_difference_emoji = '↔️'
-            
-        name_percentage = "%.2f" % float((name_today / name_yesterday) * 100 - 100)
-        if float(name_percentage) > 0:
-            name_percentage = '+' + name_percentage
-        else:
-            name_percentage = name_percentage
-            
-        data += '`{0:.<15} {1:>8.2f} | {2:>8} | {3:>6}% {4}`\n'.format(
-            company, name_today, name_difference, name_percentage, name_difference_emoji)
-    except Exception as e:
-        print(f"Error processing {ticker}: {str(e)}")
-        data += f'`{company:.<15} {"ERROR":>8} | {"ERROR":>8} | {"ERROR":>6}% ❌`\n'
+        last = hist.iloc[-1]
+        prev = hist.iloc[-2]
 
-def telegram_bot_sendtext(bot_message):
-    bot_token = credentials.bot_token
-    bot_chatID = credentials.bot_chatID
-    send_text = 'https://api.telegram.org/bot' + bot_token + '/sendMessage?chat_id=' + bot_chatID + '&parse_mode=markdown&text=' + bot_message
-    try:
-        response = requests.get(send_text, timeout=10)
-        return response.json()
-    except Exception as e:
-        print(f"Failed to send Telegram message: {str(e)}")
+        return {
+            "last_close": float(last['Close']),
+            "prev_close": float(prev['Close']),
+            "last_date": last.name.date()
+        }
+
+    except Exception:
         return None
 
-telegram_bot_sendtext('*Resumen de mercados:*\n\n' + date + '\n\n' + urllib.parse.quote(data))
+# -----------------------------
+# BUILD MESSAGE
+# -----------------------------
+lines = []
+
+for name, ticker in tickers.items():
+    info = get_last_two_closes(ticker)
+
+    if not info:
+        lines.append(f"{name:.<18} {'N/A':>8} | {'N/A':>8} | {'N/A':>6}% ❌")
+        continue
+
+    last_close = info["last_close"]
+    prev_close = info["prev_close"]
+    last_date = info["last_date"]
+
+    delta = last_close - prev_close
+    pct = (delta / prev_close) * 100
+
+    delta_str = f"{delta:+.2f}"
+    pct_str = f"{pct:+.2f}"
+
+    if delta > 0:
+        emoji = '🔴' if ticker == '^VIX' else '🟢'
+    elif delta < 0:
+        emoji = '🟢' if ticker == '^VIX' else '🔴'
+    else:
+        emoji = '↔️'
+
+    days_ago = (today.date() - last_date).days
+    session_tag = f"D-{days_ago}"
+
+    lines.append(
+        f"{name:.<18} {last_close:>8.2f} | {delta_str:>8} | {pct_str:>6}% {emoji} {session_tag}"
+    )
+
+data_block = "\n".join(lines)
+
+# -----------------------------
+# TELEGRAM (HTML, NO DRAMA)
+# -----------------------------
+def telegram_bot_sendtext(message):
+    url = f"https://api.telegram.org/bot{credentials.bot_token}/sendMessage"
+    payload = {
+        "chat_id": credentials.bot_chatID,
+        "text": message,
+        "parse_mode": "HTML",
+        "disable_web_page_preview": True
+    }
+    try:
+        requests.post(url, data=payload, timeout=10)
+    except Exception as e:
+        print(f"Telegram error: {e}")
+
+# -----------------------------
+# SEND
+# -----------------------------
+final_message = (
+    f"<b>Resumen de mercados</b>\n\n"
+    f"{date_str}\n\n"
+    f"<pre>{data_block}</pre>"
+)
+
+telegram_bot_sendtext(final_message)
