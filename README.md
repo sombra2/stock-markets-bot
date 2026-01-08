@@ -121,6 +121,7 @@ This timing ensures the report reflects the **most recent completed trading sess
 - If Yahoo Finance is unreachable or throttles requests, the bot uses cached data
 - Cached reports are clearly marked in Telegram
 - Prevents empty or misleading reports
+- `cache.json` is generated automatically at runtime and should not be committed to version control.
 
 ---
 
