@@ -1,4 +1,7 @@
-yfinance==0.2.40
-requests==2.31.0
-pandas==2.0.3
-numpy==1.26.4
+# Core dependencies
+yfinance>=0.2
+requests>=2.28
+
+# Data handling (pulled by yfinance, pinned for stability)
+pandas>=1.5
+numpy>=1.23
