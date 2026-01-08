@@ -2,12 +2,26 @@ import yfinance as yf
 import requests
 import credentials
 import datetime
-from time import sleep
+import json
+import os
 
 # -----------------------------
-# DATE FORMATTING (SPANISH)
+# FORCE BROWSER-LIKE SESSION
 # -----------------------------
-today = datetime.datetime.now()
+session = requests.Session()
+session.headers.update({
+    "User-Agent": (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/120.0 Safari/537.36"
+    )
+})
+yf.utils.get_yf_r_session = lambda: session
+
+# -----------------------------
+# DATE (SPANISH)
+# -----------------------------
+now = datetime.datetime.now()
 
 months = {
     1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
@@ -15,12 +29,12 @@ months = {
     9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
 }
 
-days_of_the_week = {
+days = {
     0: 'Lunes', 1: 'Martes', 2: 'Miércoles',
     3: 'Jueves', 4: 'Viernes', 5: 'Sábado', 6: 'Domingo'
 }
 
-date_str = f"{days_of_the_week[today.weekday()]}, {today.day} de {months[today.month]} de {today.year}"
+date_str = f"{days[now.weekday()]}, {now.day} de {months[now.month]} de {now.year}"
 
 # -----------------------------
 # TICKERS
@@ -42,36 +56,81 @@ tickers = {
     '🇮🇳 Nifty 50': '^NSEI'
 }
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CACHE_FILE = os.path.join(BASE_DIR, "cache.json")
+
 # -----------------------------
-# DATA FETCHING (ROBUST)
+# BULK FETCH
 # -----------------------------
-def get_last_two_closes(ticker):
+def fetch_market_data():
+    symbols = list(tickers.values())
+
     try:
-        hist = yf.Ticker(ticker).history(period='10d')
-        hist = hist.dropna(subset=['Close'])
-
-        if len(hist) < 2:
-            return None
-
-        last = hist.iloc[-1]
-        prev = hist.iloc[-2]
-
-        return {
-            "last_close": float(last['Close']),
-            "prev_close": float(prev['Close']),
-            "last_date": last.name.date()
-        }
-
+        raw = yf.download(
+            tickers=" ".join(symbols),
+            period="10d",
+            group_by="ticker",
+            threads=False,
+            progress=False
+        )
     except Exception:
         return None
 
+    results = {}
+
+    for name, ticker in tickers.items():
+        try:
+            df = raw[ticker].dropna(subset=['Close'])
+            if len(df) < 2:
+                continue
+
+            last = df.iloc[-1]
+            prev = df.iloc[-2]
+
+            results[name] = {
+                "ticker": ticker,
+                "last_close": float(last["Close"]),
+                "prev_close": float(prev["Close"]),
+                "last_date": last.name.strftime("%Y-%m-%d")
+            }
+        except Exception:
+            continue
+
+    return results if results else None
+
 # -----------------------------
-# BUILD MESSAGE
+# LOAD / SAVE CACHE
+# -----------------------------
+def load_cache():
+    if os.path.exists(CACHE_FILE):
+        with open(CACHE_FILE, "r") as f:
+            return json.load(f)
+    return None
+
+def save_cache(data):
+    os.makedirs(os.path.dirname(CACHE_FILE), exist_ok=True)
+    with open(CACHE_FILE, "w") as f:
+        json.dump(data, f)
+
+# -----------------------------
+# GET DATA (LIVE OR CACHE)
+# -----------------------------
+market_data = fetch_market_data()
+cached = False
+
+if market_data:
+    save_cache(market_data)
+else:
+    market_data = load_cache()
+    cached = True
+
+# -----------------------------
+# BUILD OUTPUT
 # -----------------------------
 lines = []
 
 for name, ticker in tickers.items():
-    info = get_last_two_closes(ticker)
+    info = market_data.get(name) if market_data else None
 
     if not info:
         lines.append(f"{name:.<18} {'N/A':>8} | {'N/A':>8} | {'N/A':>6}% ❌")
@@ -79,7 +138,7 @@ for name, ticker in tickers.items():
 
     last_close = info["last_close"]
     prev_close = info["prev_close"]
-    last_date = info["last_date"]
+    last_date = datetime.datetime.strptime(info["last_date"], "%Y-%m-%d").date()
 
     delta = last_close - prev_close
     pct = (delta / prev_close) * 100
@@ -88,13 +147,13 @@ for name, ticker in tickers.items():
     pct_str = f"{pct:+.2f}"
 
     if delta > 0:
-        emoji = '🔴' if ticker == '^VIX' else '🟢'
+        emoji = '🔴' if info["ticker"] == '^VIX' else '🟢'
     elif delta < 0:
-        emoji = '🟢' if ticker == '^VIX' else '🔴'
+        emoji = '🟢' if info["ticker"] == '^VIX' else '🔴'
     else:
         emoji = '↔️'
 
-    days_ago = (today.date() - last_date).days
+    days_ago = (now.date() - last_date).days
     session_tag = f"D-{days_ago}"
 
     lines.append(
@@ -104,28 +163,28 @@ for name, ticker in tickers.items():
 data_block = "\n".join(lines)
 
 # -----------------------------
-# TELEGRAM (HTML, NO DRAMA)
+# TELEGRAM SEND (HTML)
 # -----------------------------
-def telegram_bot_sendtext(message):
+def telegram_send(msg):
     url = f"https://api.telegram.org/bot{credentials.bot_token}/sendMessage"
     payload = {
         "chat_id": credentials.bot_chatID,
-        "text": message,
+        "text": msg,
         "parse_mode": "HTML",
         "disable_web_page_preview": True
     }
-    try:
-        requests.post(url, data=payload, timeout=10)
-    except Exception as e:
-        print(f"Telegram error: {e}")
+    requests.post(url, data=payload, timeout=10)
 
-# -----------------------------
-# SEND
-# -----------------------------
+header = "<b>Resumen de mercados</b>"
+if cached:
+    header += " ⚠️ <i>(datos en caché)</i>"
+
+code_lines = "\n".join(f"<code>{line}</code>" for line in lines)
+
 final_message = (
-    f"<b>Resumen de mercados</b>\n\n"
+    f"{header}\n\n"
     f"{date_str}\n\n"
-    f"<pre>{data_block}</pre>"
+    f"{code_lines}"
 )
 
-telegram_bot_sendtext(final_message)
+telegram_send(final_message)
